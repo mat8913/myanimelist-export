@@ -19,6 +19,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+import           Data.Maybe    (mapMaybe)
 import           Data.Function (fix)
 
 import           Data.ByteString (ByteString)
@@ -27,12 +28,14 @@ import qualified Data.ByteString as BS
 import           Data.Text (Text)
 
 import           Data.Yaml     (decodeFileEither)
-import           Data.Aeson.TH (deriveJSON, defaultOptions)
+import           Data.Aeson.TH (deriveJSON, defaultOptions, omitNothingFields)
 
 import           Control.Monad
 import           Control.Monad.IO.Class
 
 import           Control.Exception (throwIO)
+
+import           Data.Functor.Compose (Compose(Compose))
 
 import           Data.Conduit
 import           Data.Conduit.Zlib   (ungzip)
@@ -52,11 +55,11 @@ import           MyAnimeList.Export
 
 data Config = Config { username     :: Text
                      , password     :: Text
-                     , animeXmlPath :: FilePath
-                     , mangaXmlPath :: FilePath
+                     , animeXmlPath :: Maybe FilePath
+                     , mangaXmlPath :: Maybe FilePath
                      }
 
-$(deriveJSON defaultOptions ''Config)
+$(deriveJSON defaultOptions {omitNothingFields = True} ''Config)
 
 
 main :: IO ()
@@ -65,11 +68,14 @@ main = do
     Config {..} <- either throwIO pure =<< decodeFileEither configPath
     manager <- newTlsManager
     putStrLn "exporting"
-    [animeUri, mangaUri] <- exportLists username password manager [Anime, Manga]
-    putStrLn "downloading anime list"
-    downloadList manager animeUri animeXmlPath
-    putStrLn "downloading manga list"
-    downloadList manager mangaUri mangaXmlPath
+    let wanted = mapMaybe sequence [ (Anime, animeXmlPath)
+                                   , (Manga, mangaXmlPath)
+                                   ]
+    Compose uris <- exportLists username password manager $ Compose $
+        fmap (\x -> (x, fst x)) wanted
+    forM_ uris $ \((mt, fp), uri) -> do
+        putStrLn $ "downloading " ++ mediaTypeString mt ++ " list"
+        downloadList manager uri fp
 
 downloadList :: Manager -> URI -> FilePath -> IO ()
 downloadList manager uri fp = do
@@ -83,3 +89,7 @@ sourceBodyReader :: MonadIO m => BodyReader -> ConduitM i ByteString m ()
 sourceBodyReader br = fix $ \r -> do
     x <- liftIO $ brRead br
     unless (BS.null x) (yield x >> r)
+
+mediaTypeString :: MediaType -> String
+mediaTypeString Anime = "anime"
+mediaTypeString Manga = "manga"
