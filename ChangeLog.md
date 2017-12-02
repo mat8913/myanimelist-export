@@ -2,6 +2,7 @@
 
 * Clearer error messages on crash
 * Exception on invalid credentials
+* Exception on too many failed logins
 
 ## 0.1.0.1
 

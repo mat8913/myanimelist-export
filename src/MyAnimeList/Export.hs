@@ -68,7 +68,8 @@ data MediaType = Anime | Manga
   deriving (Read, Show, Eq, Ord, Enum)
 
 -- | Possible exceptions that could be raised by `exportLists`
-data MyAnimeListException = InvalidCredentials
+data MyAnimeListException = InvalidCredentials -- ^ Wrong username/password
+                          | TooManyAttempts    -- ^ Too many failed logins
   deriving (Read, Show, Eq, Ord)
 instance Exception MyAnimeListException
 
@@ -87,9 +88,16 @@ malExportPage = malHomePage { path = "/panel.php?go=export" }
 malExportPath :: String
 malExportPath = "/export/download.php"
 
--- | Message given by MyAnimeList on invalid credentials
-passwordMsg :: ByteString
-passwordMsg = "Your username or password is incorrect."
+-- | Known MyAnimeList error messages with the corresponding exceptions
+malErrorMap :: [(ByteString, MyAnimeListException)]
+malErrorMap = [ ("Your username or password is incorrect.", InvalidCredentials)
+              , ("Too many failed login attempts, your IP address has been blocked for several hours.", TooManyAttempts)
+              ]
+
+lookupErrorMap :: ByteString -> Maybe MyAnimeListException
+lookupErrorMap t = case filter (\(m,_) -> BS.isInfixOf m t) malErrorMap of
+    []         -> Nothing
+    ((_, e):_) -> Just e
 
 
 -- | Export list(s) and return URL(s) to gzipped XML
@@ -181,7 +189,7 @@ tagToLoginError (TagOpen "div" xs False)
         nextTag <- await
         case nextTag of
             Just (Text t)
-                | BS.isInfixOf passwordMsg t -> throwM InvalidCredentials
+                | Just e <- lookupErrorMap t -> throwM e
             Just e -> failM $ moduleName ++ ".login: unknown error: " ++ show e
             Nothing -> failM $ moduleName ++ ".login: unexpected end of stream"
 tagToLoginError _ = pure ()
