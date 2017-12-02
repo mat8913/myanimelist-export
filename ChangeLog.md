@@ -1,5 +1,7 @@
 ## 0.2.0.1 (unreleased)
 
+* Now supports http-client version >= 0.4.30
+
 ## 0.2.0.0
 
 * Clearer error messages on crash

@@ -59,9 +59,9 @@ import           Text.HTML.TagStream            (Token' (TagOpen, Text))
 import           Network.URI         (URI, parseURIReference, uriPath,
                                       relativeTo)
 import           Network.HTTP.Client (Manager, Request, BodyReader, CookieJar,
-                                      withResponse, urlEncodedBody, getUri,
-                                      path, cookieJar, responseBody,
-                                      responseCookieJar, brRead)
+                                      withResponse, parseRequest_,
+                                      urlEncodedBody, getUri, path, cookieJar,
+                                      responseBody, responseCookieJar, brRead)
 
 import           MemoizedTraverse (memoizedTraverse)
 
@@ -80,7 +80,7 @@ newtype CSRF = CSRF { unCsrf :: ByteString }
 
 
 malHomePage :: Request
-malHomePage = "https://myanimelist.net/"
+malHomePage = parseRequest_ "https://myanimelist.net/"
 
 malLoginPage :: Request
 malLoginPage = malHomePage { path = "/login.php" }
