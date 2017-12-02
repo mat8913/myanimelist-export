@@ -1,5 +1,5 @@
 name:                myanimelist-export
-version:             0.2.0.0
+version:             0.2.0.1
 synopsis:            Export from MyAnimeList
 description:
     Export anime or manga lists from MyAnimeList in XML format.  Uses the web

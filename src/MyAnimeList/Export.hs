@@ -58,7 +58,10 @@ import           Text.HTML.TagStream            (Token' (TagOpen, Text))
 
 import           Network.URI         (URI, parseURIReference, uriPath,
                                       relativeTo)
-import           Network.HTTP.Client
+import           Network.HTTP.Client (Manager, Request, BodyReader, CookieJar,
+                                      withResponse, urlEncodedBody, getUri,
+                                      path, cookieJar, responseBody,
+                                      responseCookieJar, brRead)
 
 import           MemoizedTraverse (memoizedTraverse)
 
