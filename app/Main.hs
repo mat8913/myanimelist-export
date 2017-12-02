@@ -43,12 +43,11 @@ import           Data.Conduit.Binary (sinkFile)
 
 import           System.Directory (XdgDirectory(XdgConfig), getXdgDirectory)
 
-import           Network.URI                  (URI)
-import           Network.HTTP.Client          (BodyReader, Manager, brRead,
-                                               defaultRequest, withResponse,
-                                               responseBody)
+import           Network.URI                  (URI, uriToString)
+import           Network.HTTP.Client          (Manager, BodyReader,
+                                               withResponse, parseRequest,
+                                               responseBody, brRead)
 import           Network.HTTP.Client.TLS      (newTlsManager)
-import           Network.HTTP.Client.Internal (setUri)
 
 import           MyAnimeList.Export
 
@@ -79,7 +78,7 @@ main = do
 
 downloadList :: Manager -> URI -> FilePath -> IO ()
 downloadList manager uri fp = do
-    request <- setUri defaultRequest uri
+    request <- parseRequest $ uriToString id uri ""
     withResponse request manager $ \res ->
         runConduitRes $ sourceBodyReader (responseBody res)
                      .| ungzip
