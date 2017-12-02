@@ -1,6 +1,7 @@
 ## 0.2.0.0 (unreleased)
 
 * Clearer error messages on crash
+* Exception on invalid credentials
 
 ## 0.1.0.1
 

@@ -30,12 +30,15 @@
 module MyAnimeList.Export
     ( MediaType(..)
     , exportLists
+    , MyAnimeListException(..)
     ) where
 
 import           Data.Function
 
 import           Control.Monad
 import           Control.Monad.IO.Class
+
+import           Control.Monad.Catch (MonadThrow, Exception, throwM)
 
 import           Control.Concurrent.Async (Concurrently(Concurrently),
                                            runConcurrently)
@@ -51,7 +54,7 @@ import           Data.Conduit
 import qualified Data.Conduit.List as C
 
 import           Text.HTML.TagStream.ByteString (Token, tokenStream)
-import           Text.HTML.TagStream            (Token' (TagOpen))
+import           Text.HTML.TagStream            (Token' (TagOpen, Text))
 
 import           Network.URI         (URI, parseURIReference, uriPath,
                                       relativeTo)
@@ -63,6 +66,11 @@ import           MemoizedTraverse (memoizedTraverse)
 -- | Represents a media type supported by MyAnimeList
 data MediaType = Anime | Manga
   deriving (Read, Show, Eq, Ord, Enum)
+
+-- | Possible exceptions that could be raised by `exportLists`
+data MyAnimeListException = InvalidCredentials
+  deriving (Read, Show, Eq, Ord)
+instance Exception MyAnimeListException
 
 newtype CSRF = CSRF { unCsrf :: ByteString }
 
@@ -78,6 +86,10 @@ malExportPage = malHomePage { path = "/panel.php?go=export" }
 
 malExportPath :: String
 malExportPath = "/export/download.php"
+
+-- | Message given by MyAnimeList on invalid credentials
+passwordMsg :: ByteString
+passwordMsg = "Your username or password is incorrect."
 
 
 -- | Export list(s) and return URL(s) to gzipped XML
@@ -99,8 +111,11 @@ login :: Text      -- ^ Username
       -> CSRF
       -> Manager
       -> IO CookieJar
-login username password cj csrf manager = withResponse req manager $
-    pure . responseCookieJar
+login username password cj csrf manager = withResponse req manager $ \res -> do
+    runConduit $ sourceBodyReader (responseBody res)
+              .| tokenStream
+              .| awaitForever tagToLoginError
+    pure $ responseCookieJar res
   where
     req = urlEncodedBody [ ("user_name", encodeUtf8 username)
                          , ("password", encodeUtf8 password)
@@ -160,9 +175,23 @@ tagToUri (TagOpen "a" xs False) =
     parseURIReference . B8.unpack =<< lookup "href" xs
 tagToUri _ = Nothing
 
+tagToLoginError :: MonadThrow m => Token -> ConduitM Token o m ()
+tagToLoginError (TagOpen "div" xs False)
+    | lookup "class" xs == Just "badresult" = do
+        nextTag <- await
+        case nextTag of
+            Just (Text t)
+                | BS.isInfixOf passwordMsg t -> throwM InvalidCredentials
+            Just e -> failM $ moduleName ++ ".login: unknown error: " ++ show e
+            Nothing -> failM $ moduleName ++ ".login: unexpected end of stream"
+tagToLoginError _ = pure ()
+
 mediaTypeValue :: MediaType -> ByteString
 mediaTypeValue Anime = "1"
 mediaTypeValue Manga = "2"
 
 moduleName :: String
 moduleName = "MyAnimeList.Export"
+
+failM :: MonadThrow m => String -> m a
+failM = throwM . userError
