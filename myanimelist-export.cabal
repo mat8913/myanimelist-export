@@ -6,6 +6,7 @@ description:
     interface, because the malappinfo API exports in a slightly different format
     which causes problems on importing.
 homepage:            https://github.com/mat8913/myanimelist-export#readme
+bug-reports:         https://github.com/mat8913/myanimelist-export/issues
 license:             GPL-3
 license-file:        LICENSE
 author:              Matthew Harm Bekkema
