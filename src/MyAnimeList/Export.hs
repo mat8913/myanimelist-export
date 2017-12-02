@@ -116,8 +116,9 @@ getCsrf manager = withResponse malHomePage manager $ \res ->
     runConduit $ sourceBodyReader (responseBody res)
               .| tokenStream
               .| C.mapMaybe tagToCsrf
-              .| (await >>= maybe (fail "getCsrf")
-                                  (pure . (,) (responseCookieJar res))
+              .| (await >>= maybe
+                           (fail $ moduleName ++ ".getCsrf: couldn't find csrf")
+                           (pure . (,) (responseCookieJar res))
                  )
 
 exportList :: CookieJar
@@ -131,8 +132,9 @@ exportList cj csrf manager mediaType = withResponse req manager $ \res ->
               .| C.mapMaybe tagToUri
               .| C.filter ((malExportPath ==) . uriPath)
               .| C.map (`relativeTo` getUri malHomePage)
-              .| (await >>= maybe (fail "exportList")
-                                  pure
+              .| (await >>= maybe
+                         (fail $ moduleName ++ ".exportList: couldn't find uri")
+                         pure
                  )
   where
     req = urlEncodedBody [ ("type", mediaTypeValue mediaType)
@@ -161,3 +163,6 @@ tagToUri _ = Nothing
 mediaTypeValue :: MediaType -> ByteString
 mediaTypeValue Anime = "1"
 mediaTypeValue Manga = "2"
+
+moduleName :: String
+moduleName = "MyAnimeList.Export"

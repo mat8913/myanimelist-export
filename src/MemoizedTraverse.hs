@@ -28,7 +28,7 @@ memoizedTraverse :: (Applicative f, Functor t, Foldable t, Ord a)
                  -> t a
                  -> f (t b)
 memoizedTraverse f xs = vals <&> \vals' ->
-    lookupErr "memoizedTraverse" vals' <$> xs
+    lookupErr "myanimelist-export:memoizedTraverse: lookup error" vals' <$> xs
   where
     keys = foldl' (flip (flip M.insert ())) M.empty xs
     vals = M.traverseWithKey (\k () -> f k) keys
