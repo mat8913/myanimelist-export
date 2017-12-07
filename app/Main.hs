@@ -47,7 +47,7 @@ import           Network.URI                  (URI, uriToString)
 import           Network.HTTP.Client          (Manager, BodyReader,
                                                withResponse, parseRequest,
                                                responseBody, brRead)
-import           Network.HTTP.Client.TLS      (newTlsManager)
+import           Network.HTTP.Client.TLS      (getGlobalManager)
 
 import           MyAnimeList.Export
 
@@ -65,7 +65,7 @@ main :: IO ()
 main = do
     configPath <- getXdgDirectory XdgConfig "myanimelist-export.yaml"
     Config {..} <- either throwIO pure =<< decodeFileEither configPath
-    manager <- newTlsManager
+    manager <- getGlobalManager
     putStrLn "exporting"
     let wanted = mapMaybe sequence [ (Anime, animeXmlPath)
                                    , (Manga, mangaXmlPath)
