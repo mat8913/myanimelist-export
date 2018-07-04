@@ -1,7 +1,9 @@
-## 0.2.0.1 (unreleased)
+## 0.3.0.0 (unreleased)
 
 * Now supports http-client version >= 0.4.30 and
   http-client-tls version >= 0.2.4
+* Work around MyAnimeList update: `exportLists` now also returns the CookieJar
+  which is required in order to access the download URL(s)
 
 ## 0.2.0.0
 

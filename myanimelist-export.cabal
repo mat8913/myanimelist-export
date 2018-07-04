@@ -1,5 +1,5 @@
 name:                myanimelist-export
-version:             0.2.0.1
+version:             0.3.0.0
 synopsis:            Export from MyAnimeList
 description:
     Export anime or manga lists from MyAnimeList in XML format.  Uses the web
@@ -11,7 +11,7 @@ license:             GPL-3
 license-file:        LICENSE
 author:              Matthew Harm Bekkema
 maintainer:          mbekkema97@gmail.com
-copyright:           2017 Matthew Harm Bekkema
+copyright:           2017-2018 Matthew Harm Bekkema
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md

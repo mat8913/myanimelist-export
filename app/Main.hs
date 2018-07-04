@@ -1,4 +1,4 @@
--- Copyright (C) 2017  Matthew Harm Bekkema
+-- Copyright (C) 2017-2018  Matthew Harm Bekkema
 --
 -- This file is part of myanimelist-export.
 --
@@ -44,9 +44,9 @@ import           Data.Conduit.Binary (sinkFile)
 import           System.Directory (XdgDirectory(XdgConfig), getXdgDirectory)
 
 import           Network.URI                  (URI, uriToString)
-import           Network.HTTP.Client          (Manager, BodyReader,
+import           Network.HTTP.Client          (Manager, BodyReader, CookieJar,
                                                withResponse, parseRequest,
-                                               responseBody, brRead)
+                                               responseBody, brRead, cookieJar)
 import           Network.HTTP.Client.TLS      (getGlobalManager)
 
 import           MyAnimeList.Export
@@ -70,15 +70,17 @@ main = do
     let wanted = mapMaybe sequence [ (Anime, animeXmlPath)
                                    , (Manga, mangaXmlPath)
                                    ]
-    Compose uris <- exportLists username password manager $ Compose $
+    (cj, Compose uris) <- exportLists username password manager $ Compose $
         fmap (\x -> (x, fst x)) wanted
     forM_ uris $ \((mt, fp), uri) -> do
         putStrLn $ "downloading " ++ mediaTypeString mt ++ " list"
-        downloadList manager uri fp
+        downloadList manager cj uri fp
 
-downloadList :: Manager -> URI -> FilePath -> IO ()
-downloadList manager uri fp = do
-    request <- parseRequest $ uriToString id uri ""
+downloadList :: Manager -> CookieJar -> URI -> FilePath -> IO ()
+downloadList manager cj uri fp = do
+    request <- fmap (\x -> x { cookieJar = Just cj }) $
+               parseRequest $
+               uriToString id uri ""
     withResponse request manager $ \res ->
         runConduitRes $ sourceBodyReader (responseBody res)
                      .| ungzip

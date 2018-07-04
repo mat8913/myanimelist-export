@@ -1,4 +1,4 @@
--- Copyright (C) 2017  Matthew Harm Bekkema
+-- Copyright (C) 2017-2018  Matthew Harm Bekkema
 --
 -- This file is part of myanimelist-export.
 --
@@ -103,18 +103,20 @@ lookupErrorMap t = case filter (\(m,_) -> BS.isInfixOf m t) malErrorMap of
     ((_, e):_) -> Just e
 
 
--- | Export list(s) and return URL(s) to gzipped XML
+-- | Export list(s) and return URL(s) to gzipped XML and a CookieJar which must
+-- be used in order to access them.
 exportLists :: (Functor f, Foldable f)
             => Text        -- ^ Username
             -> Text        -- ^ Password
             -> Manager     -- ^ Manager (must support TLS)
             -> f MediaType -- ^ Which list(s) to export
-            -> IO (f URI)
+            -> IO (CookieJar, f URI)
 exportLists username password manager mediaTypes = do
     (cj, csrf) <- getCsrf manager
     cj' <- login username password cj csrf manager
-    runConcurrently $ memoizedTraverse
+    urls <- runConcurrently $ memoizedTraverse
             (Concurrently . exportList cj' csrf manager) mediaTypes
+    pure (cj', urls)
 
 login :: Text      -- ^ Username
       -> Text      -- ^ Password
