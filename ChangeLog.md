@@ -1,4 +1,4 @@
-## 0.3.0.0 (unreleased)
+## 0.3.0.0
 
 * Now supports http-client version >= 0.4.30 and
   http-client-tls version >= 0.2.4
