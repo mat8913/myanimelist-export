@@ -177,7 +177,7 @@ sourceBodyReader br = fix $ \r -> do
 
 
 tagToCsrf :: Token -> Maybe CSRF
-tagToCsrf (TagOpen "meta" xs False) = case (lookup "name" xs) of
+tagToCsrf (TagOpen "meta" xs False) = case lookup "name" xs of
     Just "csrf_token" -> CSRF <$> lookup "content" xs
     _ -> Nothing
 tagToCsrf _ = Nothing
