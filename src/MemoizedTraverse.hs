@@ -1,4 +1,4 @@
--- Copyright (C) 2017  Matthew Harm Bekkema
+-- Copyright (C) 2017-2018  Matthew Harm Bekkema
 --
 -- This file is part of myanimelist-export.
 --
@@ -30,7 +30,7 @@ memoizedTraverse :: (Applicative f, Functor t, Foldable t, Ord a)
 memoizedTraverse f xs = vals <&> \vals' ->
     lookupErr "myanimelist-export:memoizedTraverse: lookup error" vals' <$> xs
   where
-    keys = foldl' (flip (flip M.insert ())) M.empty xs
+    keys = foldl' (\acc x -> M.insert x () acc) M.empty xs
     vals = M.traverseWithKey (\k () -> f k) keys
 
 lookupErr :: Ord a => String -> Map a b -> a -> b
