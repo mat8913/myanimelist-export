@@ -37,8 +37,7 @@ library
                      , tagstream-conduit >= 0.5    && < 0.6
                      , text              >= 1.2    && < 1.3
   default-language:    Haskell2010
-  other-extensions:    GeneralizedNewtypeDeriving
-                       OverloadedStrings
+  other-extensions:    OverloadedStrings
 
 executable myanimelist-export
   hs-source-dirs:      app

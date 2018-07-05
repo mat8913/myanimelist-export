@@ -24,7 +24,6 @@
 -- Stability   : experimental
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module MyAnimeList.Export
